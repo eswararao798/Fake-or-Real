@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhishNet Sentinel</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <div class="pulse-dot"></div>
+      <span class="title">PhishNet Sentinel</span>
+    </div>
+    <span class="badge-tag">XAI Core</span>
+  </div>
+
+  <div class="active-tab-box">
+    <label>Active Tab URL</label>
+    <div class="url-display" id="currentUrl">Detecting active tab...</div>
+    <div class="btn-group">
+      <button id="scanActiveBtn" class="btn btn-primary">? Analyze Active Tab</button>
+    </div>
+  </div>
+
+  <div class="manual-input-box">
+    <div class="input-row">
+      <input type="text" id="manualUrl" placeholder="Or enter URL to verify..." />
+      <button id="scanManualBtn" class="btn btn-secondary">Check</button>
+    </div>
+  </div>
+
+  <div id="loadingBox" class="loading-box hidden">
+    <div class="spinner"></div>
+    <div class="loading-text">Extracting features & evaluating TreeExplainer...</div>
+  </div>
+
+  <div id="errorBox" class="error-box hidden"></div>
+
+  <div id="resultCard" class="result-card hidden">
+    <div class="verdict-banner" id="verdictBanner">
+      <span id="verdictIcon">???</span>
+      <div>
+        <div class="verdict-title" id="verdictTitle">Likely Legitimate</div>
+        <div class="verdict-risk" id="verdictRisk">Risk Level: Low</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-col">
+        <span class="stat-label">Phishing</span>
+        <span class="stat-val text-red" id="statPhishing">0%</span>
+      </div>
+      <div class="stat-col">
+        <span class="stat-label">Legitimate</span>
+        <span class="stat-val text-emerald" id="statLegitimate">0%</span>
+      </div>
+      <div class="stat-col">
+        <span class="stat-label">Risk Score</span>
+        <span class="stat-val text-cyan" id="statRisk">0/100</span>
+      </div>
+    </div>
+
+    <div class="section-title">Explainable AI Insights (SHAP)</div>
+    <div class="shap-list" id="shapList"></div>
+
+    <div class="section-title">Security Recommendation</div>
+    <div class="recommendation-box" id="recommendationText"></div>
+  </div>
+
+  <div class="footer">
+    <span>Backend: <strong id="backendStatus">Checking...</strong></span>
+    <a href="http://localhost:3000" target="_blank" class="dashboard-link">Open Dashboard ?</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "short_name": "PhishNet Sentinel",
+  "name": "PhishNet Sentinel - Student Safety & Cyber Defense",
+  "icons": [
+    {
+      "src": "/icon192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#020617",
+  "theme_color": "#06b6d4",
+  "display": "standalone",
+  "orientation": "portrait",
+  "description": "Student web safety, explainable AI phishing detector, and illegal site blocking suite."
+}
