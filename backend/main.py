@@ -165,3 +165,46 @@ def model_info():
         with open(metrics_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     return {'message': 'Model metrics not found'}
+
+@app.post('/api/report')
+def report_phishing(request: AnalyzeRequest):
+    url = (request.url or '').strip()
+    valid, err_msg = is_valid_url(url)
+    if not valid:
+        raise HTTPException(status_code=422, detail=f'Invalid URL: {err_msg}')
+
+    reports_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'database'))
+    os.makedirs(reports_dir, exist_ok=True)
+    reports_file = os.path.join(reports_dir, 'user_reports.json')
+
+    reports = []
+    if os.path.exists(reports_file):
+        try:
+            with open(reports_file, 'r', encoding='utf-8') as f:
+                reports = json.load(f)
+        except Exception:
+            reports = []
+
+    reports.append({
+        'url': url,
+        'reported_at': os.getenv('CURRENT_TIME', 'now'),
+        'status': 'pending_retraining_queue'
+    })
+
+    with open(reports_file, 'w', encoding='utf-8') as f:
+        json.dump(reports, f, indent=2)
+
+    return {
+        'status': 'success',
+        'message': f'Thank you! URL {url} has been queued for continuous model retraining and threat database update.',
+        'total_queued_reports': len(reports)
+    }
+
+@app.post('/api/retrain')
+def trigger_retraining():
+    from backend.services.model_retrainer import retrain_model_with_user_reports
+    try:
+        metrics = retrain_model_with_user_reports()
+        return metrics
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Retraining engine failed: {str(e)}')

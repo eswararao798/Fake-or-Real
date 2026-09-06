@@ -9,6 +9,7 @@ EXPLAINER_PATH = os.path.join(MODELS_DIR, 'shap_explainer.pkl')
 
 _model = None
 _explainer = None
+_explanation_cache = {}
 
 FEATURE_HUMAN_NAMES = {
     'url_length': 'URL Length',
@@ -46,6 +47,10 @@ def load_xai_artifacts():
     return _model, _explainer
 
 def explain_prediction(feature_vector: list, feature_dict: dict) -> list:
+    cache_key = tuple(feature_vector)
+    if cache_key in _explanation_cache:
+        return _explanation_cache[cache_key]
+
     model, explainer = load_xai_artifacts()
     if explainer is None or model is None:
         return []
@@ -90,4 +95,7 @@ def explain_prediction(feature_vector: list, feature_dict: dict) -> list:
         })
 
     explanations.sort(key=lambda x: abs(x['shap_value']), reverse=True)
+    if len(_explanation_cache) > 500:
+        _explanation_cache.clear()
+    _explanation_cache[cache_key] = explanations
     return explanations

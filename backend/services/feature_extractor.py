@@ -2,6 +2,7 @@ import re
 import math
 from urllib.parse import urlparse
 import tldextract
+import httpx
 
 SUSPICIOUS_KEYWORDS = [
     'login', 'signin', 'verify', 'secure', 'account', 'update',
@@ -37,6 +38,34 @@ def calculate_entropy(text: str) -> float:
         return 0.0
     probabilities = [float(text.count(c)) / len(text) for c in dict.fromkeys(list(text))]
     return -sum(p * math.log2(p) for p in probabilities if p > 0)
+
+def unshorten_url(url: str, timeout: float = 2.5) -> tuple[str, list[str]]:
+    """
+    Traces HTTP redirect chains (e.g. bit.ly, tinyurl) to uncover the final target destination URL.
+    Returns (final_url, list_of_redirect_hops).
+    """
+    clean_url = (url or '').strip()
+    if not re.match(r'^[a-zA-Z]+://', clean_url):
+        clean_url = 'http://' + clean_url
+
+    redirect_chain = [clean_url]
+    current_url = clean_url
+
+    try:
+        with httpx.Client(follow_redirects=True, timeout=timeout, headers={'User-Agent': 'PhishNet-Sentinel-Scanner/1.0'}) as client:
+            resp = client.head(clean_url)
+            if resp.history:
+                redirect_chain = [str(r.url) for r in resp.history] + [str(resp.url)]
+                current_url = str(resp.url)
+            elif resp.status_code in (405, 403, 400):
+                resp_get = client.get(clean_url)
+                if resp_get.history:
+                    redirect_chain = [str(r.url) for r in resp_get.history] + [str(resp_get.url)]
+                    current_url = str(resp_get.url)
+    except Exception:
+        pass
+
+    return current_url, redirect_chain
 
 def extract_features(url: str) -> dict:
     clean_url = (url or '').strip()

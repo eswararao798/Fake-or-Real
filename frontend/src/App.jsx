@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import ReportModal from './components/ReportModal';
 import ScannerView from './pages/ScannerView';
 import DashboardView from './pages/DashboardView';
 import HistoryView from './pages/HistoryView';
@@ -19,6 +20,7 @@ export default function App() {
   const [modelInfo, setModelInfo] = useState(null);
   const [historySearch, setHistorySearch] = useState('');
   const [historyFilter, setHistoryFilter] = useState('ALL');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'dashboard') {
@@ -95,7 +97,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-white">
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onOpenReportModal={() => setIsReportModalOpen(true)}
+      />
+
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+      />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'scanner' && (
@@ -134,10 +145,15 @@ export default function App() {
         {activeTab === 'about' && <AboutView />}
       </main>
 
-      <footer className="border-t border-slate-800/80 bg-slate-950/80 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p>© 2026 PhishNet Sentinel. B.Tech Cybersecurity & AI Final-Year Project.</p>
-          <p className="text-slate-400">FastAPI + Scikit-learn + SHAP + React</p>
+      <footer className="border-t border-slate-800/80 bg-slate-950/90 py-6 text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="font-medium text-slate-300">PhishNet Sentinel Engine Operational</span>
+            <span className="text-slate-600">|</span>
+            <span className="text-slate-400 font-mono">XAI Random Forest Model v1.2</span>
+          </div>
+          <p className="text-slate-400 font-medium">Enterprise Explainable Cybersecurity Platform © 2026</p>
         </div>
       </footer>
     </div>

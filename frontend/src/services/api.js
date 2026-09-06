@@ -33,3 +33,21 @@ export const deleteHistory = async (id) => {
   if (!res.ok) throw new Error('Failed to delete history');
   return await res.json();
 };
+
+export const reportPhishingUrl = async (url) => {
+  const res = await fetch('/api/report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || 'Reporting failed');
+  return data;
+};
+
+export const triggerModelRetrain = async () => {
+  const res = await fetch('/api/retrain', { method: 'POST' });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || 'Retraining failed');
+  return data;
+};

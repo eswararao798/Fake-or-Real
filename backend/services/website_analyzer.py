@@ -1,11 +1,12 @@
 import os
 import joblib
 import numpy as np
-from backend.services.feature_extractor import extract_features, features_to_vector
+from backend.services.feature_extractor import extract_features, features_to_vector, unshorten_url
 from backend.services.risk_engine import calculate_risk
 from backend.services.xai_engine import explain_prediction
 from backend.services.fraud_detector import detect_fraudulent_or_illegal_site
 from backend.services.content_safety import evaluate_student_safety
+from backend.services.html_inspector import inspect_page_dom
 
 MODELS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../models'))
 MODEL_PATH = os.path.join(MODELS_DIR, 'phishing_model.pkl')
@@ -79,9 +80,15 @@ def generate_security_review(features: dict, prediction: str, risk_info: dict, f
     }
 
 def analyze_url(url: str) -> dict:
-    features = extract_features(url)
+    final_url, redirect_chain = unshorten_url(url)
+    
+    # Extract features from initial URL and target destination URL if redirected
+    features = extract_features(final_url if final_url != url else url)
+    if final_url != url:
+        features['is_shortened'] = 1
+
     vector = features_to_vector(features)
-    fraud_alert = detect_fraudulent_or_illegal_site(url)
+    fraud_alert = detect_fraudulent_or_illegal_site(final_url)
     
     model = get_model()
     if model is None:
@@ -93,15 +100,31 @@ def analyze_url(url: str) -> dict:
     phish_prob = round(float(probs[1]) * 100, 2)
     
     # Check student content safety
-    student_safety = evaluate_student_safety(url, is_phishing_predicted=(phish_prob >= 50.0))
+    student_safety = evaluate_student_safety(final_url, is_phishing_predicted=(phish_prob >= 50.0))
 
-    # If the domain is identified as an illegal/fraudulent/scam network or 18+ content, override ML safe prediction
-    if fraud_alert.get('is_fraud_or_illegal') or student_safety.get('is_blocked'):
+    # Override ML safe prediction for betting apps, adult content, or fraud sites
+    if student_safety.get('category') == 'BETTING_AND_GAMBLING':
+        phish_prob = 99.0
+        legit_prob = 1.0
+        prediction = 'betting_app_prohibited'
+    elif student_safety.get('category') == 'ADULT_18_PLUS':
+        phish_prob = 99.0
+        legit_prob = 1.0
+        prediction = 'adult_content_blocked'
+    elif fraud_alert.get('is_fraud_or_illegal') or student_safety.get('is_blocked'):
         phish_prob = max(phish_prob, 95.0)
         legit_prob = round(100.0 - phish_prob, 2)
         prediction = 'phishing'
     else:
         prediction = 'phishing' if phish_prob >= 50.0 else 'legitimate'
+
+    # Perform DOM content inspection (password fields, brand spoofing, form targets)
+    dom_findings = inspect_page_dom(final_url)
+    if dom_findings.get('risk_adjustment', 0) > 0:
+        phish_prob = min(99.0, phish_prob + dom_findings['risk_adjustment'])
+        legit_prob = round(100.0 - phish_prob, 2)
+        if phish_prob >= 50.0:
+            prediction = 'phishing'
 
     confidence = max(phish_prob, legit_prob)
     
@@ -115,8 +138,16 @@ def analyze_url(url: str) -> dict:
     explanations = explain_prediction(vector, features)
     review = generate_security_review(features, prediction, risk_info, fraud_alert=fraud_alert, student_safety=student_safety)
     
+    if len(redirect_chain) > 1:
+        review['detected_issues'].insert(0, f"REDIRECT TRACED: Shortened URL resolves to final target destination: {final_url}")
+
+    for dom_issue in dom_findings.get('issues', []):
+        review['detected_issues'].insert(0, dom_issue)
+
     return {
         'url': url,
+        'final_url': final_url,
+        'redirect_chain': redirect_chain,
         'prediction': prediction,
         'phishing_probability': phish_prob,
         'legitimate_probability': legit_prob,
@@ -129,5 +160,6 @@ def analyze_url(url: str) -> dict:
         'explanation': explanations,
         'security_review': review,
         'fraud_alert': fraud_alert,
-        'student_safety': student_safety
+        'student_safety': student_safety,
+        'dom_findings': dom_findings
     }

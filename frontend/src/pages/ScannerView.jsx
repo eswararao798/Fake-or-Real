@@ -120,43 +120,51 @@ export default function ScannerView({
                 : 'bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-950 border-emerald-800/50 shadow-emerald-950/20')
           }>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  {scanResult.student_safety?.is_blocked ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-600/30 text-rose-300 border border-rose-500/60 shadow-lg shadow-rose-950/50">
-                      <Ban className="w-4 h-4 text-rose-400" />
-                      🚫 ACCESS BLOCKED FOR STUDENTS
+                  {scanResult.student_safety?.category === 'BETTING_AND_GAMBLING' ? (
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-rose-950 text-rose-300 border border-rose-600 shadow-lg shadow-rose-950/80">
+                      <Ban className="w-4 h-4 text-rose-400 animate-pulse" />
+                      🎰 BETTING APP (PROHIBITED FOR STUDENTS)
+                    </span>
+                  ) : scanResult.student_safety?.category === 'DEVELOPER_PLATFORM' ? (
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-cyan-950 text-cyan-300 border border-cyan-500 shadow-lg shadow-cyan-950/80">
+                      <GraduationCap className="w-4 h-4 text-cyan-400" />
+                      💻 DEVELOPER PLATFORM (STUDENT APPROVED)
                     </span>
                   ) : scanResult.student_safety?.category === 'EDUCATIONAL_RESOURCE' ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg shadow-cyan-950/50">
-                      <GraduationCap className="w-4 h-4 text-cyan-400" />
-                      🎓 VERIFIED EDUCATIONAL RESOURCE
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-950 text-emerald-300 border border-emerald-500 shadow-lg shadow-emerald-950/80">
+                      <GraduationCap className="w-4 h-4 text-emerald-400" />
+                      🎓 EDUCATIONAL RESOURCE (STUDENT APPROVED)
+                    </span>
+                  ) : scanResult.student_safety?.is_blocked ? (
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-rose-950 text-rose-300 border border-rose-600 shadow-lg shadow-rose-950/80">
+                      <Ban className="w-4 h-4 text-rose-400" />
+                      🚫 RESTRICTED / BLOCKED FOR STUDENTS
                     </span>
                   ) : (
-                    <span className={'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ' +
+                    <span className={'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider ' +
                       (scanResult.prediction === 'phishing'
                         ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                         : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30')
                     }>
                       {scanResult.prediction === 'phishing' ? <ShieldAlert className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                      {scanResult.prediction === 'phishing' ? '🔴 PHISHING DETECTED' : '🟢 LIKELY LEGITIMATE'}
-                    </span>
-                  )}
-                  
-                  {scanResult.student_safety && (
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-                      {scanResult.student_safety.category_label}
+                      {scanResult.prediction === 'phishing' ? '🔴 PHISHING CLONE DETECTED' : '🟢 VERIFIED LEGITIMATE DOMAIN'}
                     </span>
                   )}
 
-                  <span className="text-xs text-slate-400 font-mono">Risk Level: <strong>{scanResult.risk_level}</strong></span>
+                  {scanResult.student_safety?.purpose && (
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-900 text-slate-200 border border-slate-700">
+                      Purpose: {scanResult.student_safety.purpose}
+                    </span>
+                  )}
                 </div>
 
                 <h2 className="text-xl sm:text-2xl font-bold text-white break-all flex items-center gap-2">
                   {scanResult.url}
                   {scanResult.student_safety?.is_blocked ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-rose-400 font-normal px-2 py-0.5 bg-rose-950/60 rounded border border-rose-800/60" title="Outbound link disabled to protect student safety">
-                      <Lock className="w-3.5 h-3.5 inline" /> Link Blocked
+                    <span className="inline-flex items-center gap-1 text-xs text-rose-400 font-normal px-2 py-0.5 bg-rose-950/60 rounded border border-rose-800/60" title="Outbound link disabled for student protection">
+                      <Lock className="w-3.5 h-3.5 inline" /> Restricted Access
                     </span>
                   ) : (
                     <a href={scanResult.url} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-cyan-400" title="Open verified site in new tab">
@@ -170,23 +178,25 @@ export default function ScannerView({
                 </p>
               </div>
 
-              <div className="flex items-center gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+              <div className="flex items-center gap-4 bg-slate-950/80 p-4 rounded-xl border border-slate-800/80">
                 <div className="text-center">
-                  <div className="text-xs uppercase font-semibold tracking-wider text-red-400">Phishing</div>
+                  <div className="text-xs uppercase font-semibold tracking-wider text-red-400">
+                    {scanResult.student_safety?.category === 'BETTING_AND_GAMBLING' ? 'Risk Level' : 'Phishing Prob'}
+                  </div>
                   <div className="text-2xl sm:text-3xl font-extrabold text-red-400 font-mono">
                     {scanResult.phishing_probability}%
                   </div>
                 </div>
                 <div className="h-10 w-px bg-slate-800"></div>
                 <div className="text-center">
-                  <div className="text-xs uppercase font-semibold tracking-wider text-emerald-400">Legitimate</div>
+                  <div className="text-xs uppercase font-semibold tracking-wider text-emerald-400">Legitimate Prob</div>
                   <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono">
                     {scanResult.legitimate_probability}%
                   </div>
                 </div>
                 <div className="h-10 w-px bg-slate-800"></div>
                 <div className="text-center">
-                  <div className="text-xs uppercase font-semibold tracking-wider text-cyan-400">Risk Score</div>
+                  <div className="text-xs uppercase font-semibold tracking-wider text-cyan-400">Threat Score</div>
                   <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
                     {scanResult.risk_score} <span className="text-xs text-slate-500 font-normal">/100</span>
                   </div>
