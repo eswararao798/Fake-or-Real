@@ -106,11 +106,11 @@ def analyze_url(url: str) -> dict:
     if student_safety.get('category') == 'BETTING_AND_GAMBLING':
         phish_prob = 99.0
         legit_prob = 1.0
-        prediction = 'betting_app_prohibited'
+        prediction = 'phishing'
     elif student_safety.get('category') == 'ADULT_18_PLUS':
         phish_prob = 99.0
         legit_prob = 1.0
-        prediction = 'adult_content_blocked'
+        prediction = 'phishing'
     elif fraud_alert.get('is_fraud_or_illegal') or student_safety.get('is_blocked'):
         phish_prob = max(phish_prob, 95.0)
         legit_prob = round(100.0 - phish_prob, 2)

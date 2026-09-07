@@ -124,8 +124,8 @@ export default function ScannerView({
                 <div className="flex flex-wrap items-center gap-2">
                   {scanResult.student_safety?.category === 'BETTING_AND_GAMBLING' ? (
                     <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-rose-950 text-rose-300 border border-rose-600 shadow-lg shadow-rose-950/80">
-                      <Ban className="w-4 h-4 text-rose-400 animate-pulse" />
-                      🎰 BETTING APP (PROHIBITED FOR STUDENTS)
+                      <ShieldAlert className="w-4 h-4 text-rose-400 animate-pulse" />
+                      🔴 PHISHING / ILLEGAL BETTING APP DETECTED
                     </span>
                   ) : scanResult.student_safety?.category === 'DEVELOPER_PLATFORM' ? (
                     <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-cyan-950 text-cyan-300 border border-cyan-500 shadow-lg shadow-cyan-950/80">
