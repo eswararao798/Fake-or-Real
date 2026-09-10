@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   ShieldAlert, ShieldCheck, AlertTriangle, Search, ExternalLink, 
   RefreshCw, BarChart3, CheckCircle2, XCircle, Globe, FileText,
-  GraduationCap, Ban, Lock
+  GraduationCap, Ban, Lock, Cpu, Network
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -285,6 +285,83 @@ export default function ScannerView({
                   </div>
                 </div>
               </div>
+
+              {scanResult.deep_learning && (
+                <div className="bg-gradient-to-br from-slate-900/80 via-indigo-950/20 to-slate-900/80 border border-indigo-500/30 rounded-2xl p-6 space-y-4 shadow-lg shadow-indigo-950/30">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Cpu className="w-4 h-4 text-indigo-400" />
+                      <span>Deep Learning Neural Telemetry</span>
+                    </h3>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                      Dual-Network Active
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-300 flex items-center gap-1.5">
+                          <Network className="w-3.5 h-3.5 text-cyan-400" />
+                          Char-Level 1D-CNN (Sequence):
+                        </span>
+                        <span className="font-mono font-bold text-cyan-400">
+                          {(scanResult.deep_learning.char_cnn_score * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-cyan-500 h-full rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, Math.max(0, scanResult.deep_learning.char_cnn_score * 100))}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        Evaluates character n-grams and sub-word patterns directly from raw URL sequence.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-300 flex items-center gap-1.5">
+                          <Cpu className="w-3.5 h-3.5 text-purple-400" />
+                          Deep MLP / ANN (Feature Non-Linearity):
+                        </span>
+                        <span className="font-mono font-bold text-purple-400">
+                          {(scanResult.deep_learning.deep_mlp_score * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-purple-500 h-full rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, Math.max(0, scanResult.deep_learning.deep_mlp_score * 100))}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        Models non-linear feature interactions across 24 standard and structural indicators.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-white text-xs">DL Consensus Threat:</div>
+                        <div className="text-[10px] text-indigo-300">Weighted neural ensemble score</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-mono font-extrabold text-sm text-indigo-300">
+                          {(scanResult.deep_learning.dl_hybrid_score * 100).toFixed(1)}%
+                        </div>
+                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                          scanResult.deep_learning.dl_prediction === 'phishing'
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        }`}>
+                          {scanResult.deep_learning.dl_prediction}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="lg:col-span-7 space-y-6">

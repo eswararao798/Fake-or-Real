@@ -10,14 +10,67 @@ from backend.services.html_inspector import inspect_page_dom
 
 MODELS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../models'))
 MODEL_PATH = os.path.join(MODELS_DIR, 'phishing_model.pkl')
+CHAR_CNN_PATH = os.path.join(MODELS_DIR, 'char_cnn_model.keras')
+DEEP_MLP_PATH = os.path.join(MODELS_DIR, 'deep_mlp_model.keras')
+DL_SCALER_PATH = os.path.join(MODELS_DIR, 'dl_scaler.pkl')
 
 _model = None
+_char_cnn = None
+_deep_mlp = None
+_dl_scaler = None
 
 def get_model():
     global _model
     if _model is None and os.path.exists(MODEL_PATH):
         _model = joblib.load(MODEL_PATH)
     return _model
+
+def get_dl_models():
+    global _char_cnn, _deep_mlp, _dl_scaler
+    try:
+        import tensorflow as tf
+        if _char_cnn is None and os.path.exists(CHAR_CNN_PATH):
+            _char_cnn = tf.keras.models.load_model(CHAR_CNN_PATH)
+        if _deep_mlp is None and os.path.exists(DEEP_MLP_PATH):
+            _deep_mlp = tf.keras.models.load_model(DEEP_MLP_PATH)
+        if _dl_scaler is None and os.path.exists(DL_SCALER_PATH):
+            _dl_scaler = joblib.load(DL_SCALER_PATH)
+    except Exception as e:
+        print(f"[DL Load Warning] Could not load DL models: {e}")
+    return _char_cnn, _deep_mlp, _dl_scaler
+
+def predict_deep_learning(raw_url: str, feature_vector: list) -> dict:
+    char_cnn, deep_mlp, dl_scaler = get_dl_models()
+    if char_cnn is None or deep_mlp is None:
+        return {
+            'enabled': False,
+            'message': 'Deep Learning models not loaded'
+        }
+    try:
+        from backend.ml.deep_learning_models import encode_url_sequence
+        seq = np.array([encode_url_sequence(raw_url)], dtype=np.int32)
+        cnn_prob = float(char_cnn.predict(seq, verbose=0)[0][0])
+        
+        feat_arr = np.array([feature_vector], dtype=np.float32)
+        if dl_scaler:
+            feat_arr = dl_scaler.transform(feat_arr)
+        mlp_prob = float(deep_mlp.predict(feat_arr, verbose=0)[0][0])
+        
+        hybrid_prob = round((0.6 * cnn_prob + 0.4 * mlp_prob) * 100, 2)
+        
+        return {
+            'enabled': True,
+            'char_cnn_score': round(cnn_prob * 100, 2),
+            'deep_mlp_score': round(mlp_prob * 100, 2),
+            'dl_hybrid_score': hybrid_prob,
+            'dl_prediction': 'phishing' if hybrid_prob >= 50.0 else 'legitimate',
+            'model_types': ['Character-Level 1D-CNN', 'Deep MLP / ANN']
+        }
+    except Exception as e:
+        return {
+            'enabled': False,
+            'error': str(e)
+        }
 
 def generate_security_review(features: dict, prediction: str, risk_info: dict, fraud_alert: dict = None, student_safety: dict = None) -> dict:
     detected_issues = []
@@ -141,8 +194,8 @@ def analyze_url(url: str) -> dict:
     if len(redirect_chain) > 1:
         review['detected_issues'].insert(0, f"REDIRECT TRACED: Shortened URL resolves to final target destination: {final_url}")
 
-    for dom_issue in dom_findings.get('issues', []):
-        review['detected_issues'].insert(0, dom_issue)
+    # Execute Deep Learning analysis (Char-1D-CNN + Deep MLP)
+    dl_analysis = predict_deep_learning(final_url, vector)
 
     return {
         'url': url,
@@ -161,5 +214,6 @@ def analyze_url(url: str) -> dict:
         'security_review': review,
         'fraud_alert': fraud_alert,
         'student_safety': student_safety,
-        'dom_findings': dom_findings
+        'dom_findings': dom_findings,
+        'deep_learning': dl_analysis
     }

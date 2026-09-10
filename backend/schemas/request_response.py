@@ -37,6 +37,8 @@ class AnalyzeResponse(BaseModel):
     security_review: SecurityReview
     fraud_alert: Optional[Dict[str, Any]] = None
     student_safety: Optional[Dict[str, Any]] = None
+    dom_findings: Optional[Dict[str, Any]] = None
+    deep_learning: Optional[Dict[str, Any]] = None
     scan_id: Optional[int] = None
     timestamp: Optional[str] = None
 
